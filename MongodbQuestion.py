@@ -123,6 +123,8 @@ def insert_channel_info(channel_id):
     #print(channel_response)
 
     # Check if the channel exists
+    client = init_connection()
+    db = client.youtube
     if 'items' in channel_response:
         channel_info = channel_response['items'][0]
 
@@ -141,17 +143,19 @@ def insert_channel_info(channel_id):
         print(f"Channel Views: {channel_views}")
         print(f"Channel Description: {channel_description}")
         print(f"Channel Status: {channel_status}")
-        client = init_connection()
-        db = client.youtube
-        db.channel.insert_one({
-        "_id": channel_id,
-        "channel_id": channel_id,
-        "channel_name": channel_name,
-        "channel_type": channel_type,
-        "channel_views": channel_views,
-        "channel_description": channel_description,
-        "channel_status": channel_status
-        })
+        
+        try:
+            db.channel.insert_one({
+            "_id": channel_id,
+            "channel_id": channel_id,
+            "channel_name": channel_name,
+            "channel_type": channel_type,
+            "channel_views": channel_views,
+            "channel_description": channel_description,
+            "channel_status": channel_status
+            })
+        except:
+            pass
     else:
         print("Channel not found.")
 
@@ -177,12 +181,15 @@ def insert_channel_playlists(channel_id):
             playlist_id = playlist['id']
             playlist_name = playlist['snippet']['title']
             print(f"Playlist ID: {playlist_id}, Playlist Name: {playlist_name}")
-            db.playlist.insert_one({
-                "_id": playlist_id,
-                "playlist_id": playlist_id,
-                "playlist_name": playlist_name,
-                "channel_id": channel_id,
-            })
+            try:
+                db.playlist.insert_one({
+                    "_id": playlist_id,
+                    "playlist_id": playlist_id,
+                    "playlist_name": playlist_name,
+                    "channel_id": channel_id,
+                })
+            except:
+                pass
 
     else:
         print("No playlists found for the channel.")
@@ -211,6 +218,8 @@ def insert_playlist_videos(playlist_id):
 
         # Print video details
         #print("Video Details:",videos_response )
+        client = init_connection()
+        db = client.youtube
         for video in videos_response['items']:
             video_id = video['id']
             video_name = video['snippet']['title']
@@ -240,24 +249,26 @@ def insert_playlist_videos(playlist_id):
             print(f"Thumbnail URL: {thumbnail_url}")
             print(f"Caption Status: {caption_status}")
             print("\n")
-            client = init_connection()
-            db = client.youtube
-            db.video.insert_one({
-                "_id": playlist_id+"_"+video_id,
-                "video_id": video_id,
-                "video_name": video_name,
-                "playlist_id": playlist_id,
-                "video_description": video_description,
-                "publish_date": datetime.strptime(publish_date, "%Y-%m-%dT%H:%M:%SZ"),
-                "view_count" : view_count,
-                "like_count":like_count,
-                "dislike_count":dislike_count,
-                "favorite_count":favorite_count,
-                "comment_count":comment_count,
-                "duration":duration,
-                "thumbnail_url": thumbnail_url,
-                "caption_status": caption_status
-            })
+            
+            try:
+                db.video.insert_one({
+                    "_id": playlist_id+"_"+video_id,
+                    "video_id": video_id,
+                    "video_name": video_name,
+                    "playlist_id": playlist_id,
+                    "video_description": video_description,
+                    "publish_date": datetime.strptime(publish_date, "%Y-%m-%dT%H:%M:%SZ"),
+                    "view_count" : view_count,
+                    "like_count":like_count,
+                    "dislike_count":dislike_count,
+                    "favorite_count":favorite_count,
+                    "comment_count":comment_count,
+                    "duration":duration,
+                    "thumbnail_url": thumbnail_url,
+                    "caption_status": caption_status
+                })
+            except:
+                pass
 
     else:
         print("No videos found in the playlist.")
@@ -306,14 +317,17 @@ def insert_video_comments(video_id, playlist_id, channel_id):
             print(f"Comment Author: {comment_author}")
             print(f"Comment Publish Date: {comment_publish_date}")
             print("\n")
-            db.comment.insert_one({
-                "_id": channel_id + "_" + playlist_id +"_" + video_id + "_" + comment_id,
-                "comment_id": comment_id,
-                "video_id": video_id,
-                "comment_text": comment_text,
-                "comment_author": comment_author,
-                "comment_publish_date": comment_publish_date,
-            })
+            try:
+                db.comment.insert_one({
+                    "_id": channel_id + "_" + playlist_id +"_" + video_id + "_" + comment_id,
+                    "comment_id": comment_id,
+                    "video_id": video_id,
+                    "comment_text": comment_text,
+                    "comment_author": comment_author,
+                    "comment_publish_date": comment_publish_date,
+                })
+            except:
+                pass
 
     else:
         print("No comments found for the video.")
@@ -750,7 +764,7 @@ def question_9():
     #min_conv()
     client = init_connection()
     db = client.youtube
-    result = db.video.aggregate([
+    result_9 = db.video.aggregate([
         {
             '$lookup': {
                 'from': 'playlist',
@@ -789,11 +803,19 @@ def question_9():
         }
     ])
 
+    st.write("\nQuestion 9:")
+
     # Print the results
-    # for doc in result:
-    #     print(f"Channel: {doc['channel_name']}, Average Duration: {doc['average_duration']} minutes")
-    result_table = [{"Channel Name": doc['channel_name'][0], "Average Duration": doc['average_duration']} for doc in result]
-    st.table(result_table)
+    # for result in result_9:
+    #     print(result)
+
+    # Display the results in a table using Streamlit
+    result_table_9 = [{
+        "Channel Name": result['channel_name'][0],
+        "Average Duration": result['average_duration']
+    } for result in result_9]
+
+    st.table(result_table_9)
 
 # Example: Question 10
 def question_10():
